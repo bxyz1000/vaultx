@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_secure_storage: ^9.0.0
+  flutter_secure_storage: ^10.3.1
   sqflite: ^2.3.0
   path_provider: ^2.1.1
   image_picker: ^1.0.4
@@ -20,11 +20,11 @@ dependencies:
   flutter_native_splash: ^2.3.10
   share_plus: ^7.2.1
   # Google auth + Drive
-  google_sign_in: ^6.2.1
+  google_sign_in: ^7.1.1
   googleapis: ^12.0.0
   http: ^1.2.0
   # PDF / document rendering
-  syncfusion_flutter_pdfviewer: ^24.2.9
+  syncfusion_flutter_pdfviewer: ^33.2.13
   pdf: ^3.10.8
   printing: ^5.12.0
   # Image processing (enhance feature)
