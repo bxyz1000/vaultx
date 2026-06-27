@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -12,60 +12,83 @@ class GoogleAuthService {
     ],
   );
 
-  static final _storage = const FlutterSecureStorage();
+  static const FlutterSecureStorage _storage = FlutterSecureStorage();
 
   static GoogleSignInAccount? get currentUser => _googleSignIn.currentUser;
-  static bool get isSignedIn => _googleSignIn.currentUser != null;
 
-  /// Silently restore previous session (call on app start)
+  static bool get isSignedIn => currentUser != null;
+
+  /// Restore previous login
   static Future<GoogleSignInAccount?> signInSilently() async {
     try {
       return await _googleSignIn.signInSilently();
-    } catch (_) {
+    } catch (e, s) {
+      debugPrint("===== Silent Sign-In Error =====");
+      debugPrint(e.toString());
+      debugPrint(s.toString());
       return null;
     }
   }
 
-  /// Interactive sign-in
+  /// Interactive Google Sign-In
   static Future<GoogleSignInAccount?> signIn() async {
     try {
-      final account = await _googleSignIn.signIn();
-      if (account != null) {
-        await _storage.write(key: 'google_signed_in', value: 'true');
+      final GoogleSignInAccount? account =
+          await _googleSignIn.signIn();
+
+      if (account == null) {
+        throw Exception("User cancelled Google Sign-In.");
       }
+
+      await _storage.write(
+        key: "google_signed_in",
+        value: "true",
+      );
+
+      debugPrint("Google Sign-In Successful");
+      debugPrint("User: ${account.email}");
+
       return account;
-    } catch (e) {
-      debugPrint('Google Sign-In error: $e');
-      return null;
+    } catch (e, s) {
+      debugPrint("========== GOOGLE SIGN-IN ERROR ==========");
+      debugPrint(e.toString());
+      debugPrint(s.toString());
+      rethrow;
     }
   }
 
-  /// Get fresh auth headers for API calls
   static Future<Map<String, String>> getAuthHeaders() async {
-    final account = _googleSignIn.currentUser;
-    if (account == null) throw Exception('Not signed in');
+    final account = currentUser;
+    if (account == null) {
+      throw Exception("No Google account signed in.");
+    }
+
     final auth = await account.authentication;
+
     return {
-      'Authorization': 'Bearer ${auth.accessToken}',
-      'Content-Type': 'application/json',
+      "Authorization": "Bearer ${auth.accessToken}",
+      "Content-Type": "application/json",
     };
   }
 
-  /// Get access token
   static Future<String?> getAccessToken() async {
-    final account = _googleSignIn.currentUser;
+    final account = currentUser;
     if (account == null) return null;
+
     final auth = await account.authentication;
     return auth.accessToken;
   }
 
-  /// Revoke and sign out completely
+  /// Disconnect Google account completely
   static Future<void> signOut() async {
-    await _googleSignIn.disconnect();
-    await _storage.delete(key: 'google_signed_in');
+    try {
+      await _googleSignIn.disconnect();
+    } catch (_) {}
+
+    await _storage.delete(key: "google_signed_in");
   }
 
-  /// Just sign out (keep account linkage)
+  /// Only sign out
   static Future<void> signOutOnly() async {
     await _googleSignIn.signOut();
   }
